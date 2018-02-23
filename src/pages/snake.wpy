@@ -1,32 +1,111 @@
 <template>
   <view class="snake">
 		<canvas style="width: 100%; height: 400px;" canvas-id="snakeCanvas"></canvas>
+    <view @tap="changeDir(0)" style="height: 50px;width: 50px; border: solid 1px red;">up</view>
+    <view @tap="changeDir(2)" style="height: 50px;width: 50px; border: solid 1px red;">down</view>
+    <view @tap="changeDir(3)" style="height: 50px;width: 50px; border: solid 1px red;">left</view>
+    <view @tap="changeDir(1)" style="height: 50px;width: 50px; border: solid 1px red;">right</view>
 	</view>
 </template>
 <script>
 import wepy from 'wepy'
 export default class Index extends wepy.page {
+  data = {
+    snake: [],
+    snake_next_dir: 1,
+    score: 0,
+    ctx: '',
+    canvas: {
+      width: 400,
+      height: 400
+    }
+  }
   config = {
     navigationBarTitleText: '贪吃蛇'
   }
-  onReady(e) {
-    var context = wx.createCanvasContext('snakeCanvas')
-    context.setStrokeStyle('#00ff00')
-    context.setLineWidth(5)
-    context.rect(0, 0, 400, 400)
-    context.stroke()
-    context.setStrokeStyle('#ff0000')
-    context.setLineWidth(2)
-    context.moveTo(160, 100)
-    context.arc(100, 100, 60, 0, 2 * Math.PI, true)
-    context.moveTo(140, 100)
-    context.arc(100, 100, 40, 0, Math.PI, false)
-    context.moveTo(85, 80)
-    context.arc(80, 80, 5, 0, 2 * Math.PI, true)
-    context.moveTo(125, 80)
-    context.arc(120, 80, 5, 0, 2 * Math.PI, true)
-    context.stroke()
-    context.draw()
+  methods = {
+    changeDir(dir) {
+      // up: 0,right: 1,down: 2,left: 3
+      console.log(dir, typeof dir)
+      this.snake_next_dir = parseInt(dir, 10)
+    }
+  }
+  onLoad(e) {
+    this.ctx = wx.createCanvasContext('snakeCanvas')
+    this.newGame()
+    this.main()
+    // canvas.onkeydown = function (evt) {
+    //     evt = evt || window.event;
+    //     changeDir(evt.keyCode);
+    // }
+  }
+  newGame() {
+    for (let i = 4; i >= 0; i--) {
+      this.snake.push({
+        x: i,
+        y: 15
+      })
+    }
+    this.snake_next_dir = 1
+    this.score = 0
+  }
+  main() {
+    let _x = this.snake[0].x
+    let _y = this.snake[0].y
+     // up: 0,right: 1,down: 2,left: 3
+    switch (this.snake_next_dir) {
+      case 0:
+        _y--
+        break
+      case 1:
+        _x++
+        break
+      case 2:
+        _y++
+        break
+      case 3:
+        _x--
+        break
+      default:
+        break
+    }
+    this.snake.pop()
+    this.snake.unshift({
+      x: _x,
+      y: _y
+    })
+    for (var i = 0, x = this.snake.length; i < x; i++) {
+      if (this.snake[i].x < 0) {
+        this.snake[i].x = this.snake[i].x + (this.canvas.width / 10)
+      }
+      if (this.snake[i].x === this.canvas.width / 10) {
+        this.snake[i].x = this.snake[i].x - (this.canvas.width / 10)
+      }
+      if (this.snake[i].y < 0) {
+        this.snake[i].y = this.snake[i].y + (this.canvas.height / 10)
+      }
+      if (this.snake[i].y === this.canvas.height / 10) {
+        this.snake[i].y = this.snake[i].y - (this.canvas.height / 10)
+      }
+    }
+    // 绘画蛇的区域
+    this.ctx.beginPath()
+    this.ctx.setFillStyle('#111')
+    this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height)
+    // 绘画蛇
+    for (let j = 0; j < this.snake.length; j++) {
+      this.drawDot(this.snake[j].x, this.snake[j].y)
+    }
+    this.ctx.fill()
+    this.ctx.draw()
+
+    setTimeout(() => {
+      this.main()
+    }, 500)
+  }
+  drawDot(x, y) {
+    this.ctx.setFillStyle('#eee')
+    this.ctx.fillRect(x * 10, y * 10, 10, 10)
   }
 }
 </script>
