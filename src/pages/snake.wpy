@@ -18,7 +18,10 @@ export default class Index extends wepy.page {
     canvas: {
       width: 400,
       height: 400
-    }
+    },
+    food: {},
+    hasFood: false,
+    size: 20
   }
   config = {
     navigationBarTitleText: '贪吃蛇'
@@ -26,7 +29,6 @@ export default class Index extends wepy.page {
   methods = {
     changeDir(dir) {
       // up: 0,right: 1,down: 2,left: 3
-      console.log(dir, typeof dir)
       this.snake_next_dir = parseInt(dir, 10)
     }
   }
@@ -34,10 +36,7 @@ export default class Index extends wepy.page {
     this.ctx = wx.createCanvasContext('snakeCanvas')
     this.newGame()
     this.main()
-    // canvas.onkeydown = function (evt) {
-    //     evt = evt || window.event;
-    //     changeDir(evt.keyCode);
-    // }
+    this.makeFood()
   }
   newGame() {
     for (let i = 4; i >= 0; i--) {
@@ -74,28 +73,27 @@ export default class Index extends wepy.page {
       x: _x,
       y: _y
     })
-    for (var i = 0, x = this.snake.length; i < x; i++) {
-      if (this.snake[i].x < 0) {
-        this.snake[i].x = this.snake[i].x + (this.canvas.width / 10)
-      }
-      if (this.snake[i].x === this.canvas.width / 10) {
-        this.snake[i].x = this.snake[i].x - (this.canvas.width / 10)
-      }
-      if (this.snake[i].y < 0) {
-        this.snake[i].y = this.snake[i].y + (this.canvas.height / 10)
-      }
-      if (this.snake[i].y === this.canvas.height / 10) {
-        this.snake[i].y = this.snake[i].y - (this.canvas.height / 10)
-      }
-    }
     // 绘画蛇的区域
     this.ctx.beginPath()
     this.ctx.setFillStyle('#111')
     this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height)
+    // 绘画食物
+    this.makeFood()
     // 绘画蛇
     for (let j = 0; j < this.snake.length; j++) {
+      // 吃食物
+      if (this.hasFood) {
+        if (this.food.x === this.snake[j].x && this.food.y === this.snake[j].y) {
+          this.snake[this.snake.length] = {
+            x: this.food.x,
+            y: this.food.y
+          }
+          this.hasFood = false
+        }
+      }
       this.drawDot(this.snake[j].x, this.snake[j].y)
     }
+
     this.ctx.fill()
     this.ctx.draw()
 
@@ -105,7 +103,21 @@ export default class Index extends wepy.page {
   }
   drawDot(x, y) {
     this.ctx.setFillStyle('#eee')
-    this.ctx.fillRect(x * 10, y * 10, 10, 10)
+    this.ctx.fillRect(x * this.size, y * this.size, this.size, this.size)
+  }
+  makeFood() {
+    if (!this.hasFood) {
+      this.food.x = Math.floor(Math.random() * ((this.canvas.width / this.size) - 1))
+      this.food.y = Math.floor(Math.random() * ((this.canvas.height / this.size) - 1))
+      for (var i = 0; i < this.snake.length; i++) {
+          // 如果食物被吃就增加食物
+        // if (checkBlock(food.x, food.y, snake[i].x, snake[i].y)) {
+        //     addFood()
+        //   }
+      }
+      this.hasFood = true
+    }
+    this.drawDot(this.food.x, this.food.y)
   }
 }
 </script>
