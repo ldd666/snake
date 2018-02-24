@@ -1,11 +1,21 @@
 <template>
   <view class="snake">
-		<canvas style="width: 100%; height: 400px;" canvas-id="snakeCanvas"></canvas>
-    <view @tap="changeDir(0)" style="height: 50px;width: 50px; border: solid 1px red;">up</view>
-    <view @tap="changeDir(2)" style="height: 50px;width: 50px; border: solid 1px red;">down</view>
-    <view @tap="changeDir(3)" style="height: 50px;width: 50px; border: solid 1px red;">left</view>
-    <view @tap="changeDir(1)" style="height: 50px;width: 50px; border: solid 1px red;">right</view>
-	</view>
+    <view class="head">
+      <text class="difficult">难度：3</text>
+      <text class="score">总分：{{score}}</text>
+    </view>
+		<canvas id="snakeCanvas" canvas-id="snakeCanvas"></canvas>
+    <view @tap="changeDir(0)" class="play-up">上</view>
+    <view class="play-down">
+      <view @tap="changeDir(3)" class="play">左</view>
+      <view @tap="changeDir(2)" class="play">下</view>
+      <view @tap="changeDir(1)" class="play">右</view>
+    </view>
+    <cover-view wx:if="{{gameover}}" class="mask">
+      <cover-view class="score">您得了{{score}}分</cover-view>
+      <cover-view  class="again">再来一局</cover-view>
+    </cover-view>
+  </view>
 </template>
 <script>
 import wepy from 'wepy'
@@ -16,12 +26,13 @@ export default class Index extends wepy.page {
     score: 0,
     ctx: '',
     canvas: {
-      width: 400,
-      height: 400
+      width: 320,
+      height: 320
     },
     food: {},
     hasFood: false,
-    size: 20
+    size: 10,
+    gameover: false
   }
   config = {
     navigationBarTitleText: '贪吃蛇'
@@ -29,6 +40,14 @@ export default class Index extends wepy.page {
   methods = {
     changeDir(dir) {
       // up: 0,right: 1,down: 2,left: 3
+      // 上次方向是上，不能点击下
+      if ((this.snake_next_dir === 0 && parseInt(dir, 10) === 2) || (this.snake_next_dir === 2 && parseInt(dir, 10) === 0)) {
+        return
+      }
+      // 上次方向是左，不能点击右
+      if ((this.snake_next_dir === 3 && parseInt(dir, 10) === 1) || (this.snake_next_dir === 1 && parseInt(dir, 10) === 3)) {
+        return
+      }
       this.snake_next_dir = parseInt(dir, 10)
     }
   }
@@ -39,6 +58,7 @@ export default class Index extends wepy.page {
     this.makeFood()
   }
   newGame() {
+    // 倒叙，使其向前进步
     for (let i = 4; i >= 0; i--) {
       this.snake.push({
         x: i,
@@ -75,10 +95,26 @@ export default class Index extends wepy.page {
     })
     // 绘画蛇的区域
     this.ctx.beginPath()
-    this.ctx.setFillStyle('#111')
-    this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height)
+    for (let m = 0; m <= this.canvas.width / this.size; m++) {
+      this.ctx.moveTo(0, m * this.size)
+      this.ctx.lineTo(this.canvas.width, m * this.size)
+    }
+    for (let n = 0; n <= this.canvas.height / this.size; n++) {
+      this.ctx.moveTo(n * this.size, 0)
+      this.ctx.lineTo(n * this.size, this.canvas.height)
+    }
+    this.ctx.stroke()
+
+    // this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height)
     // 绘画食物
     this.makeFood()
+    // 检查是否碰墙
+    if (this.snake[0].x < 0 || this.snake[0].x === this.canvas.width / this.size || this.snake[0].y < 0 || this.snake[0].y === this.canvas.height / this.size) {
+      console.log('gameover')
+      this.gameover = true
+      this.$apply()
+      return
+    }
     // 绘画蛇
     for (let j = 0; j < this.snake.length; j++) {
       // 吃食物
@@ -88,6 +124,7 @@ export default class Index extends wepy.page {
             x: this.food.x,
             y: this.food.y
           }
+          this.score++
           this.hasFood = false
         }
       }
@@ -102,7 +139,7 @@ export default class Index extends wepy.page {
     }, 500)
   }
   drawDot(x, y) {
-    this.ctx.setFillStyle('#eee')
+    this.ctx.setFillStyle('#3CB371')
     this.ctx.fillRect(x * this.size, y * this.size, this.size, this.size)
   }
   makeFood() {
@@ -123,11 +160,78 @@ export default class Index extends wepy.page {
 </script>
 <style lang="less">
 .snake{
-	background-color:#4466a3;
+  background-color: #383838;
 	position: absolute;
 	top: 0;
 	left: 0;
 	right: 0;
-	bottom: 0;
+  bottom: 0;
+  .head {
+    height: 60px;
+    color: #fff;
+    line-height: 60px;
+    .difficult {
+      float:left;
+      margin-left: 10px;
+    }
+    .score {
+      float: right;
+      margin-right: 10px;
+    }
+  }
+  .play-up {
+    height: 50px;
+    width: 50px;
+    border: solid 1px #CD853F;
+    margin:0 auto;
+    color: #fff;
+    text-align:center;
+    line-height: 50px;
+    background-color:orange;
+    border-radius:8px;
+  }
+  .play-down {
+    margin:auto;
+    width: 156px;
+    color: #fff;
+    .play {
+      height: 50px;
+      width: 50px; 
+      border: solid 1px #CD853F;
+      display: inline-block;
+      text-align:center;
+      line-height: 50px;
+      background-color:orange;
+      border-radius:8px;
+    }
+  }
+}
+#snakeCanvas {
+  width: 320px;
+  height: 320px;
+  margin: 0 auto;
+  clear:both;
+}
+.mask {
+  color: #fff;
+  position:absolute;
+  top:0;
+  left:0;
+  bottom: 0;
+  right:0;
+  background-color:rgba(0, 0, 0, 0.9);
+  .score {
+    text-align:center;
+    margin-top:50%;
+  }
+  .again {
+    text-align:center;
+    height: 50px;
+    width:200px;
+    background-color:orange;
+    line-height: 50px;
+    border-radius:8px;
+    margin:20px auto;
+  }
 }
 </style>
