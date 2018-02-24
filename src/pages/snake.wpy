@@ -7,13 +7,13 @@
 		<canvas id="snakeCanvas" canvas-id="snakeCanvas"></canvas>
     <view @tap="changeDir(0)" class="play-up">上</view>
     <view class="play-down">
-      <view @tap="changeDir(3)" class="play">左</view>
-      <view @tap="changeDir(2)" class="play">下</view>
+      <view @tap="changeDir(3)" style="margin-right: 70px;" class="play">左</view>
       <view @tap="changeDir(1)" class="play">右</view>
     </view>
+    <view @tap="changeDir(2)" class="play-up">下</view>
     <cover-view wx:if="{{gameover}}" class="mask">
       <cover-view class="score">您得了{{score}}分</cover-view>
-      <cover-view  class="again">再来一局</cover-view>
+      <cover-view  class="again" @tap="again">再来一局</cover-view>
     </cover-view>
   </view>
 </template>
@@ -31,8 +31,9 @@ export default class Index extends wepy.page {
     },
     food: {},
     hasFood: false,
-    size: 10,
-    gameover: false
+    size: 16,
+    gameover: false,
+    time: 400
   }
   config = {
     navigationBarTitleText: '贪吃蛇'
@@ -49,9 +50,19 @@ export default class Index extends wepy.page {
         return
       }
       this.snake_next_dir = parseInt(dir, 10)
+    },
+    again() {
+      this.gameover = false
+      this.init()
     }
   }
   onLoad(e) {
+    this.init()
+  }
+  init() {
+    this.snake.length = 0
+    this.score = 0
+    this.snake_next_dir = 1
     this.ctx = wx.createCanvasContext('snakeCanvas')
     this.newGame()
     this.main()
@@ -126,6 +137,7 @@ export default class Index extends wepy.page {
           }
           this.score++
           this.hasFood = false
+          this.$apply()
         }
       }
       this.drawDot(this.snake[j].x, this.snake[j].y)
@@ -136,7 +148,7 @@ export default class Index extends wepy.page {
 
     setTimeout(() => {
       this.main()
-    }, 500)
+    }, this.time)
   }
   drawDot(x, y) {
     this.ctx.setFillStyle('#3CB371')
@@ -156,6 +168,13 @@ export default class Index extends wepy.page {
     }
     this.drawDot(this.food.x, this.food.y)
   }
+  onShareAppMessage() {
+    return {
+      title: '贪吃蛇',
+      desc: '我们小时候曾经爱玩儿的小游戏，还记得不？快来玩儿吧！！!',
+      path: '/pages/snake'
+    }
+  }
 }
 </script>
 <style lang="less">
@@ -167,9 +186,9 @@ export default class Index extends wepy.page {
 	right: 0;
   bottom: 0;
   .head {
-    height: 60px;
+    height: 40px;
     color: #fff;
-    line-height: 60px;
+    line-height: 40px;
     .difficult {
       float:left;
       margin-left: 10px;
@@ -180,27 +199,30 @@ export default class Index extends wepy.page {
     }
   }
   .play-up {
-    height: 50px;
-    width: 50px;
+    height: 45px;
+    width: 70px;
     border: solid 1px #CD853F;
     margin:0 auto;
     color: #fff;
     text-align:center;
-    line-height: 50px;
+    line-height: 45px;
     background-color:orange;
     border-radius:8px;
+    position: relative;
+    left: -4px;
   }
   .play-down {
     margin:auto;
-    width: 156px;
+    width: 226px;
     color: #fff;
     .play {
-      height: 50px;
-      width: 50px; 
+      height: 45px;
+      width: 70px; 
+      margin-right: 10px;
       border: solid 1px #CD853F;
       display: inline-block;
       text-align:center;
-      line-height: 50px;
+      line-height: 45px;
       background-color:orange;
       border-radius:8px;
     }
